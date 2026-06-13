@@ -1,0 +1,97 @@
+/* Table Resizer Styles */
+
+.table-resizer-handle {
+  position: absolute;
+  top: 0;
+  right: -2px;
+  width: 5px;
+  height: 100%;
+  cursor: col-resize;
+  user-select: none;
+  z-index: 100;
+}
+
+.table-resizer-handle:hover {
+  background-color: var(--interactive-accent, #7f6df2);
+  opacity: 0.5;
+}
+
+.table-resizer-handle.dragging {
+  background-color: var(--interactive-accent, #7f6df2);
+  opacity: 0.8;
+}
+
+/* 表格单元格需要设置为相对定位以便放置拖拽手柄 */
+.table-resizer-active td,
+.table-resizer-active th {
+  position: relative;
+  height: auto;
+}
+
+/* 防止空单元格在阅读视图下塌陷
+   min-height 在 display:table-cell 上不可靠，使用 ::after 伪元素撑高 */
+.table-resizer-active td:empty::after,
+.table-resizer-active th:empty::after {
+  content: '\00a0';
+  display: inline-block;
+  line-height: 1.8;
+}
+
+/* Also handle cells that contain only whitespace (not technically :empty) */
+.table-resizer-active td:not(:has(*)):not(:empty)::after,
+.table-resizer-active th:not(:has(*)):not(:empty)::after {
+  content: none;
+}
+
+.table-resizer-active tr {
+  height: auto;
+}
+
+/* 拖拽时的视觉反馈 */
+.table-resizer-dragging {
+  cursor: col-resize !important;
+}
+
+.table-resizer-dragging * {
+  cursor: col-resize !important;
+  user-select: none;
+}
+
+/* 调整后的列宽高亮 */
+.table-resizer-resized {
+  background-color: var(--background-modifier-success, rgba(0, 255, 0, 0.1));
+}
+
+/* 拖拽指示线 */
+.table-resizer-line {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: var(--interactive-accent, #7f6df2);
+  pointer-events: none;
+  z-index: 9999;
+  display: none;
+}
+
+.table-resizer-active .table-resizer-line {
+  display: block;
+}
+
+/* 编辑视图（Live Preview）特殊样式 */
+.cm-content .table-resizer-handle,
+.CodeMirror-code .table-resizer-handle {
+  z-index: 1000;
+}
+
+/* 确保在编辑视图中表格可见 */
+.markdown-source-view table {
+  border-collapse: collapse;
+}
+
+/* 防止编辑视图中拖拽时选中文字 */
+.table-resizer-dragging .cm-content,
+.table-resizer-dragging .CodeMirror-code {
+  user-select: none;
+  pointer-events: none;
+}

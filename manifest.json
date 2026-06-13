@@ -1,0 +1,10 @@
+{
+  "id": "table-resizer",
+  "name": "Table Resizer",
+  "version": "1.0.1",
+  "minAppVersion": "0.15.0",
+  "description": "Drag to resize markdown table column widths",
+  "author": "Your Name",
+  "authorUrl": "https://your-website.com",
+  "isDesktopOnly": false
+}
