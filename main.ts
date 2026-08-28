@@ -1,5 +1,8 @@
 import { Plugin, MarkdownView, Notice } from 'obsidian';
 
+// 调试开关：需要排查问题时改为 true 即可恢复日志输出
+const DEBUG_LOGGING = false;
+
 interface TableResizerSettings {
 	enableResizer: boolean;
 	minColumnWidth: number;
@@ -31,6 +34,7 @@ export default class TableResizerPlugin extends Plugin {
 	private periodicScanInterval: number | null = null;
 
 	private log(message: string, data?: unknown) {
+		if (!DEBUG_LOGGING) return;
 		const ts = new Date().toISOString().substring(11, 23);
 		const prefix = `[TableResizer ${ts}]`;
 		if (data !== undefined) {
@@ -137,7 +141,7 @@ export default class TableResizerPlugin extends Plugin {
 							this.dumpTableState('onReady (after init)');
 							this.log('Tables initialized (onReady)');
 						} catch (err) {
-							console.warn('Error initializing tables:', err);
+							if (DEBUG_LOGGING) console.warn('Error initializing tables:', err);
 						}
 					}, 100);
 				});
@@ -151,7 +155,7 @@ export default class TableResizerPlugin extends Plugin {
 						this.dumpTableState('fallback (after init)');
 						this.log('Tables initialized (fallback)');
 					} catch (err) {
-						console.warn('Error initializing tables:', err);
+						if (DEBUG_LOGGING) console.warn('Error initializing tables:', err);
 					}
 				}, 500);
 			}
@@ -220,7 +224,7 @@ export default class TableResizerPlugin extends Plugin {
 				document.documentElement.appendChild(style);
 			}
 		} catch (error) {
-			console.error('Error registering stylesheet:', error);
+			if (DEBUG_LOGGING) console.error('Error registering stylesheet:', error);
 		}
 	}
 
@@ -271,11 +275,11 @@ export default class TableResizerPlugin extends Plugin {
 						this.processTables(view.contentEl);
 					}
 				} catch (error) {
-					console.warn('Error processing view:', error);
+					if (DEBUG_LOGGING) console.warn('Error processing view:', error);
 				}
 			});
 		} catch (error) {
-			console.error('Error in initTables:', error);
+			if (DEBUG_LOGGING) console.error('Error in initTables:', error);
 		}
 	}
 
@@ -884,7 +888,7 @@ export default class TableResizerPlugin extends Plugin {
 				this.applyStoredWidths(htmlTable);
 			});
 		} catch (error) {
-			console.warn('Error applying stored widths:', error);
+			if (DEBUG_LOGGING) console.warn('Error applying stored widths:', error);
 		}
 	}
 }
