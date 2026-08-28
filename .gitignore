@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build output
+*.js.map
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test
+coverage/
+.nyc_output/
+
+# Misc
+*.log
+.env
+.env.local
