@@ -211,11 +211,6 @@ export default class TableResizerPlugin extends Plugin {
 				.table-resizer-active tr {
 					height: auto;
 				}
-
-				.table-resizer-dragging * {
-					cursor: col-resize !important;
-					user-select: none !important;
-				}
 			`;
 
 			if (document.head) {
