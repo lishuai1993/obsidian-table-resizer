@@ -3,7 +3,7 @@
   "name": "Table Resize",
   "version": "1.0.2",
   "minAppVersion": "1.12.7",
-  "description": "Drag to resize markdown table column widths",
+  "description": "Drag to resize markdown table column widths.",
   "author": "lishuai",
   "authorUrl": "https://github.com/lishuai1993",
   "isDesktopOnly": true
