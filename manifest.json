@@ -1,7 +1,7 @@
 {
   "id": "table-resize",
   "name": "Table Resize",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "minAppVersion": "1.12.7",
   "description": "Drag to resize markdown table column widths.",
   "author": "lishuai",
