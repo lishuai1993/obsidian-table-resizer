@@ -41,6 +41,16 @@
   height: auto;
 }
 
+/* 让长英文/无空格字符串也随列宽自动换行；overflow-wrap 不可继承，Live Preview 需命中内层 .cm-content */
+.markdown-source-view.mod-cm6 .cm-table-widget table.table-resizer-active .cm-content.cm-lineWrapping {
+  overflow-wrap: anywhere;
+}
+
+.markdown-rendered table.table-resizer-active td,
+.markdown-rendered table.table-resizer-active th {
+  overflow-wrap: anywhere;
+}
+
 /* 拖拽时全屏透明遮罩：伪元素承担整页 col-resize 光标，避免强制优先级与通配选择器 */
 body.table-resizer-dragging::before {
   content: "";

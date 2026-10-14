@@ -53,9 +53,6 @@ export default class TableResizerPlugin extends Plugin {
 			await this.loadSettings();
 			this.log('Settings loaded', this.settings);
 
-			this.registerStyleSheet();
-			this.log('Styles registered');
-
 			this.registerEvent(
 				this.app.workspace.on('layout-change', () => {
 					this.log('Event: layout-change');
@@ -163,63 +160,6 @@ export default class TableResizerPlugin extends Plugin {
 			this.log('Plugin loaded successfully');
 		} catch (error) {
 			console.error('Failed to load Table Resizer plugin:', error);
-		}
-	}
-
-	private registerStyleSheet() {
-		try {
-			if (document.getElementById('table-resizer-styles')) {
-				return;
-			}
-
-			const style = document.createElement('style');
-			style.id = 'table-resizer-styles';
-			style.textContent = `
-				.table-resizer-handle {
-					position: absolute;
-					top: 0;
-					right: -2px;
-					width: 5px;
-					height: 100%;
-					cursor: col-resize;
-					user-select: none;
-					z-index: 100;
-					opacity: 0;
-					transition: opacity 0.2s;
-				}
-
-				.table-resizer-handle:hover,
-				.table-resizer-handle.dragging {
-					background-color: var(--interactive-accent, #7f6df2);
-					opacity: 0.5;
-				}
-
-				.table-resizer-active td,
-				.table-resizer-active th {
-					position: relative;
-					height: auto;
-				}
-
-				/* Prevent empty cells from collapsing — min-height is unreliable on table-cell */
-				.table-resizer-active td:empty::after,
-				.table-resizer-active th:empty::after {
-					content: '\\00a0';
-					display: inline-block;
-					line-height: 1.8;
-				}
-
-				.table-resizer-active tr {
-					height: auto;
-				}
-			`;
-
-			if (document.head) {
-				document.head.appendChild(style);
-			} else {
-				document.documentElement.appendChild(style);
-			}
-		} catch (error) {
-			if (DEBUG_LOGGING) console.error('Error registering stylesheet:', error);
 		}
 	}
 
@@ -793,12 +733,6 @@ export default class TableResizerPlugin extends Plugin {
 		if (this.widthSaveTimer !== null) {
 			clearTimeout(this.widthSaveTimer);
 			this.widthSaveTimer = null;
-		}
-
-		// Remove styles
-		const style = document.getElementById('table-resizer-styles');
-		if (style) {
-			style.remove();
 		}
 
 		// Remove all table resizers
