@@ -28,7 +28,6 @@ __export(main_exports, {
 });
 module.exports = __toCommonJS(main_exports);
 var import_obsidian = require("obsidian");
-var DEBUG_LOGGING = false;
 var DEFAULT_SETTINGS = {
   enableResizer: true,
   minColumnWidth: 50,
@@ -77,19 +76,17 @@ var TableResizerPlugin = class extends import_obsidian.Plugin {
       if (this.settings.saveWidths && draggedTable) {
         this.updateMarkdownTable(draggedTable);
       }
-      this.log(`handleMouseUp: drag ended, column=${draggedColumn}`);
       if (draggedTable && draggedColumn >= 0) {
         const tableId = this.getTableIdentifier(draggedTable);
         const storedWidths = this.tableWidths.get(tableId);
         const expectedWidth = storedWidths == null ? void 0 : storedWidths.get(draggedColumn);
         if (expectedWidth) {
-          requestAnimationFrame(() => {
-            this.confirmColumnWidth(draggedTable, draggedColumn, expectedWidth, 1);
-            requestAnimationFrame(() => {
-              this.confirmColumnWidth(draggedTable, draggedColumn, expectedWidth, 2);
-              setTimeout(() => {
-                this.confirmColumnWidth(draggedTable, draggedColumn, expectedWidth, 3);
-                this.dumpTableState("after drag (3 confirmations)");
+          window.requestAnimationFrame(() => {
+            this.confirmColumnWidth(draggedTable, draggedColumn, expectedWidth);
+            window.requestAnimationFrame(() => {
+              this.confirmColumnWidth(draggedTable, draggedColumn, expectedWidth);
+              window.setTimeout(() => {
+                this.confirmColumnWidth(draggedTable, draggedColumn, expectedWidth);
               }, 100);
             });
           });
@@ -99,65 +96,42 @@ var TableResizerPlugin = class extends import_obsidian.Plugin {
       this.currentColumn = -1;
     };
   }
-  log(message, data) {
-    if (!DEBUG_LOGGING)
-      return;
-    const ts = (/* @__PURE__ */ new Date()).toISOString().substring(11, 23);
-    const prefix = `[TableResizer ${ts}]`;
-    if (data !== void 0) {
-      console.log(`${prefix} ${message}`, data);
-    } else {
-      console.log(`${prefix} ${message}`);
-    }
-  }
   async onload() {
-    this.log("Plugin loading...");
     try {
       this.settings = Object.assign({}, DEFAULT_SETTINGS);
       await this.loadSettings();
-      this.log("Settings loaded", this.settings);
       this.registerEvent(
         this.app.workspace.on("layout-change", () => {
-          this.log("Event: layout-change");
-          this.dumpTableState("layout-change (before init)");
           this.initTables();
-          setTimeout(() => {
+          window.setTimeout(() => {
             this.applyAllStoredWidths();
-            this.dumpTableState("layout-change (after apply)");
           }, 100);
         })
       );
       this.registerEvent(
         this.app.workspace.on("active-leaf-change", () => {
-          this.log("Event: active-leaf-change");
-          this.dumpTableState("active-leaf-change (before init)");
           this.initTables();
-          setTimeout(() => {
+          window.setTimeout(() => {
             this.applyAllStoredWidths();
-            this.dumpTableState("active-leaf-change (after apply)");
           }, 100);
         })
       );
       this.registerEvent(
         this.app.workspace.on("file-open", () => {
-          this.log("Event: file-open");
-          this.dumpTableState("file-open (before init)");
-          setTimeout(() => {
+          window.setTimeout(() => {
             this.initTables();
             this.applyAllStoredWidths();
-            this.dumpTableState("file-open (after apply)");
           }, 200);
         })
       );
       this.registerDomEvent(document, "keyup", () => {
         if (this.keyupDebounceTimer !== null) {
-          clearTimeout(this.keyupDebounceTimer);
+          window.clearTimeout(this.keyupDebounceTimer);
         }
         this.keyupDebounceTimer = window.setTimeout(() => {
           this.keyupDebounceTimer = null;
-          this.log("keyup scan: checking for new tables");
           this.initTables();
-          requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => {
             this.applyAllStoredWidths();
           });
         }, 500);
@@ -170,49 +144,22 @@ var TableResizerPlugin = class extends import_obsidian.Plugin {
         }
       }, 8e3);
       this.registerInterval(this.periodicScanInterval);
-      this.log("keyup listener + periodic scan registered");
       this.addCommand({
-        id: "toggle-table-resizer",
-        name: "Toggle table resizer",
+        id: "toggle-resizing",
+        name: "Toggle resizing",
         callback: () => {
           this.settings.enableResizer = !this.settings.enableResizer;
-          this.saveSettings();
+          void this.saveSettings();
           new import_obsidian.Notice(`Table resizer ${this.settings.enableResizer ? "enabled" : "disabled"}`);
           this.initTables();
         }
       });
-      if (this.app.workspace.onReady) {
-        this.app.workspace.onReady(() => {
-          setTimeout(() => {
-            try {
-              this.log("onReady: initializing tables");
-              this.dumpTableState("onReady (before init)");
-              this.initTables();
-              this.applyAllStoredWidths();
-              this.dumpTableState("onReady (after init)");
-              this.log("Tables initialized (onReady)");
-            } catch (err) {
-              if (DEBUG_LOGGING)
-                console.warn("Error initializing tables:", err);
-            }
-          }, 100);
-        });
-      } else {
-        setTimeout(() => {
-          try {
-            this.log("fallback: initializing tables");
-            this.dumpTableState("fallback (before init)");
-            this.initTables();
-            this.applyAllStoredWidths();
-            this.dumpTableState("fallback (after init)");
-            this.log("Tables initialized (fallback)");
-          } catch (err) {
-            if (DEBUG_LOGGING)
-              console.warn("Error initializing tables:", err);
-          }
-        }, 500);
-      }
-      this.log("Plugin loaded successfully");
+      this.app.workspace.onLayoutReady(() => {
+        window.setTimeout(() => {
+          this.initTables();
+          this.applyAllStoredWidths();
+        }, 100);
+      });
     } catch (error) {
       console.error("Failed to load Table Resizer plugin:", error);
     }
@@ -221,10 +168,8 @@ var TableResizerPlugin = class extends import_obsidian.Plugin {
     try {
       const markdownViews = this.app.workspace.getLeavesOfType("markdown");
       if (!markdownViews || markdownViews.length === 0) {
-        this.log("initTables: no markdown views found");
         return;
       }
-      this.log(`initTables: processing ${markdownViews.length} markdown view(s)`);
       markdownViews.forEach((leaf) => {
         try {
           const view = leaf.view;
@@ -234,83 +179,61 @@ var TableResizerPlugin = class extends import_obsidian.Plugin {
           this.setupMutationObserver(view.contentEl);
           const previewEl = view.contentEl.querySelector(".markdown-preview-view") || view.contentEl.querySelector(".markdown-reading-view") || view.contentEl.querySelector(".markdown-preview-sizer");
           if (previewEl) {
-            this.log("Found preview element, processing tables...");
             this.processTables(previewEl);
           }
           const sourceEl = view.contentEl.querySelector(".markdown-source-view") || view.contentEl.querySelector(".cm-content") || view.contentEl.querySelector(".CodeMirror-code");
           if (sourceEl) {
-            this.log("Found source/edit element, processing tables...");
             this.processTables(sourceEl);
           }
           if (!previewEl && !sourceEl) {
-            this.log("No specific view element found, searching in contentEl...");
             this.processTables(view.contentEl);
           }
         } catch (error) {
-          if (DEBUG_LOGGING)
-            console.warn("Error processing view:", error);
+          console.warn("Error processing view:", error);
         }
       });
     } catch (error) {
-      if (DEBUG_LOGGING)
-        console.error("Error in initTables:", error);
+      console.error("Error in initTables:", error);
     }
   }
   setupMutationObserver(container) {
     if (this.mutationObservers.has(container)) {
       return;
     }
-    this.log("MutationObserver: setting up on", container.className || container.tagName);
-    let mutationCount = 0;
     const observer = new MutationObserver((mutations) => {
-      var _a;
-      mutationCount++;
       if (this.isApplyingWidths) {
         return;
       }
       let tableRelated = false;
-      let triggerReason = "";
       for (const mutation of mutations) {
         if (mutation.type === "childList") {
           for (const node of mutation.addedNodes) {
-            if (node instanceof HTMLElement) {
-              if (node.tagName === "TABLE") {
+            if (node.instanceOf(HTMLElement)) {
+              if (node.tagName === "TABLE" || node.querySelector("table")) {
                 tableRelated = true;
-                triggerReason = `TABLE added (${((_a = node.rows) == null ? void 0 : _a.length) || 0} rows)`;
-                break;
-              }
-              if (node.querySelector("table")) {
-                tableRelated = true;
-                triggerReason = "node containing TABLE added";
                 break;
               }
             }
           }
           if (!tableRelated) {
             for (const node of mutation.removedNodes) {
-              if (node instanceof HTMLElement) {
+              if (node.instanceOf(HTMLElement)) {
                 if (node.tagName === "TABLE" || node.querySelector("table")) {
                   tableRelated = true;
-                  triggerReason = "TABLE removed";
                   break;
                 }
               }
             }
           }
-          if (!tableRelated && mutation.target instanceof HTMLElement) {
-            const closestTable = mutation.target.closest("table");
-            if (closestTable) {
+          if (!tableRelated && mutation.target.instanceOf(HTMLElement)) {
+            if (mutation.target.closest("table")) {
               tableRelated = true;
-              const targetDesc = mutation.target.tagName || mutation.target.nodeName;
-              triggerReason = `DOM change inside table (target: ${targetDesc}, added: ${mutation.addedNodes.length}, removed: ${mutation.removedNodes.length})`;
             }
           }
         } else if (mutation.type === "characterData") {
-          if (mutation.target instanceof Node && mutation.target.parentElement) {
-            const closestTable = mutation.target.parentElement.closest("table");
-            if (closestTable) {
+          if (mutation.target.instanceOf(Node) && mutation.target.parentElement) {
+            if (mutation.target.parentElement.closest("table")) {
               tableRelated = true;
-              triggerReason = `characterData change inside table`;
             }
           }
         }
@@ -318,7 +241,6 @@ var TableResizerPlugin = class extends import_obsidian.Plugin {
           break;
       }
       if (tableRelated) {
-        this.log(`MutationObserver [#${mutationCount}]: ${triggerReason}`);
         this.scheduleMutationReapply();
       }
     });
@@ -328,7 +250,6 @@ var TableResizerPlugin = class extends import_obsidian.Plugin {
       characterData: true
     });
     this.mutationObservers.set(container, observer);
-    this.log("MutationObserver: registered successfully");
   }
   scheduleMutationReapply() {
     if (this.mutationReapplyPending)
@@ -336,22 +257,18 @@ var TableResizerPlugin = class extends import_obsidian.Plugin {
     this.mutationReapplyPending = true;
     queueMicrotask(() => {
       this.mutationReapplyPending = false;
-      this.log("MutationObserver: re-initializing tables");
-      this.dumpTableState("before mutation reapply");
       this.initTables();
-      requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
         this.applyAllStoredWidths();
-        requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
           this.applyAllStoredWidths();
-          this.dumpTableState("after mutation reapply (2x rAF)");
         });
       });
     });
   }
   processTables(container) {
     const tables = container.querySelectorAll("table");
-    this.log(`processTables: found ${tables.length} table(s) in container`);
-    tables.forEach((table, idx) => {
+    tables.forEach((table) => {
       if (this.settings.enableResizer) {
         this.enableResizing(table);
         this.applyStoredWidths(table);
@@ -365,33 +282,20 @@ var TableResizerPlugin = class extends import_obsidian.Plugin {
     table.classList.add("table-resizer-active");
     const rows = table.querySelectorAll("tr");
     if (!rows || rows.length === 0) {
-      this.log("enableResizing: table has no rows, skipping");
       return;
     }
-    const firstRow = rows[0];
-    const columnCount = firstRow.querySelectorAll("th, td").length;
     const totalCells = Array.from(rows).reduce((sum, row) => sum + row.querySelectorAll("th, td").length, 0);
     const existingHandles = table.querySelectorAll(".table-resizer-handle").length;
     if (hadClass && existingHandles >= totalCells) {
-      this.log(`enableResizing: already active with ${existingHandles} handles, skipping`);
       return;
-    }
-    if (hadClass && existingHandles < totalCells) {
-      this.log(`enableResizing: handles missing (${existingHandles}/${totalCells}), re-adding`);
-    } else {
-      this.log(`enableResizing: table ${rows.length}x${columnCount}, adding handles`);
     }
     this.isApplyingWidths = true;
     rows.forEach((row) => {
       const cells = row.querySelectorAll("th, td");
       cells.forEach((cell, index) => {
-        var _a;
         const el = cell;
         if (!cell.querySelector(".table-resizer-handle")) {
           this.addResizerHandle(el, table, index);
-        }
-        if (((_a = el.textContent) == null ? void 0 : _a.trim()) === "") {
-          el.style.minHeight = "1.8em";
         }
       });
     });
@@ -403,7 +307,7 @@ var TableResizerPlugin = class extends import_obsidian.Plugin {
   }
   disableResizing(table) {
     table.classList.remove("table-resizer-active");
-    table.style.tableLayout = "";
+    table.classList.remove("table-resizer-fixed");
     const handles = table.querySelectorAll(".table-resizer-handle");
     handles.forEach((handle) => handle.remove());
   }
@@ -411,8 +315,7 @@ var TableResizerPlugin = class extends import_obsidian.Plugin {
     if (cell.querySelector(".table-resizer-handle")) {
       return;
     }
-    const handle = document.createElement("div");
-    handle.className = "table-resizer-handle";
+    const handle = cell.createEl("div", { cls: "table-resizer-handle" });
     handle.dataset.column = columnIndex.toString();
     handle.addEventListener("mousedown", (e) => {
       e.preventDefault();
@@ -425,7 +328,6 @@ var TableResizerPlugin = class extends import_obsidian.Plugin {
       const touch = e.touches[0];
       this.startDrag({ clientX: touch.clientX, clientY: touch.clientY }, table, columnIndex);
     }, { passive: false });
-    cell.appendChild(handle);
   }
   startDrag(e, table, columnIndex) {
     this.isDragging = true;
@@ -437,7 +339,6 @@ var TableResizerPlugin = class extends import_obsidian.Plugin {
       return;
     const cell = firstRow.querySelectorAll("th, td")[columnIndex];
     this.startWidth = cell.offsetWidth;
-    this.log(`startDrag: column=${columnIndex}, startWidth=${this.startWidth}px, clientX=${e.clientX}`);
     document.body.classList.add("table-resizer-dragging");
     const allHandles = table.querySelectorAll(".table-resizer-handle");
     allHandles.forEach((handle) => {
@@ -446,7 +347,7 @@ var TableResizerPlugin = class extends import_obsidian.Plugin {
       }
     });
   }
-  confirmColumnWidth(table, columnIndex, expectedWidth, round) {
+  confirmColumnWidth(table, columnIndex, expectedWidth) {
     const firstRow = table.querySelector("tr");
     if (!firstRow)
       return;
@@ -455,7 +356,6 @@ var TableResizerPlugin = class extends import_obsidian.Plugin {
       return;
     const currentWidth = cell.style.width;
     if (currentWidth !== `${expectedWidth}px`) {
-      this.log(`confirmColumnWidth round#${round}: width mismatch (expected=${expectedWidth}px, actual=${currentWidth}), re-applying`);
       this.isApplyingWidths = true;
       const rows = table.querySelectorAll("tr");
       rows.forEach((row) => {
@@ -472,9 +372,7 @@ var TableResizerPlugin = class extends import_obsidian.Plugin {
   }
   applyColumnWidth(table, columnIndex, width) {
     const rows = table.querySelectorAll("tr");
-    const tableId = this.getTableIdentifier(table);
-    this.log(`applyColumnWidth: table=${tableId}, col=${columnIndex}, width=${width}px, rows=${rows.length}`);
-    table.style.tableLayout = "fixed";
+    table.classList.add("table-resizer-fixed");
     this.isApplyingWidths = true;
     rows.forEach((row) => {
       const cells = row.querySelectorAll("th, td");
@@ -487,14 +385,13 @@ var TableResizerPlugin = class extends import_obsidian.Plugin {
     });
     this.isApplyingWidths = false;
     this.saveTableColumnWidth(table, columnIndex, width);
-    requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
       const rowsNow = table.querySelectorAll("tr");
       rowsNow.forEach((row) => {
         const cells = row.querySelectorAll("th, td");
         if (cells[columnIndex]) {
           const cell = cells[columnIndex];
           if (cell.style.width !== `${width}px`) {
-            this.log(`applyColumnWidth: width was overwritten for col=${columnIndex}, re-applying (rAF)`);
             this.isApplyingWidths = true;
             cell.style.width = `${width}px`;
             cell.style.minWidth = `${width}px`;
@@ -511,7 +408,6 @@ var TableResizerPlugin = class extends import_obsidian.Plugin {
       this.tableWidths.set(tableId, /* @__PURE__ */ new Map());
     }
     this.tableWidths.get(tableId).set(columnIndex, width);
-    this.log(`saveTableColumnWidth: table=${tableId}, col=${columnIndex}, width=${width}px, total stored: ${this.tableWidths.size} tables`);
     this.persistWidths();
   }
   serializeWidths() {
@@ -536,16 +432,14 @@ var TableResizerPlugin = class extends import_obsidian.Plugin {
       }
       this.tableWidths.set(tableId, colMap);
     }
-    this.log(`deserializeWidths: restored ${this.tableWidths.size} table(s)`);
   }
   persistWidths() {
     if (this.widthSaveTimer !== null) {
-      clearTimeout(this.widthSaveTimer);
+      window.clearTimeout(this.widthSaveTimer);
     }
     this.widthSaveTimer = window.setTimeout(() => {
       this.widthSaveTimer = null;
-      this.saveSettings();
-      this.log("persistWidths: saved to disk");
+      void this.saveSettings();
     }, 500);
   }
   getTableIdentifier(table) {
@@ -564,7 +458,7 @@ var TableResizerPlugin = class extends import_obsidian.Plugin {
         const activeFile = (_c = (_b = this.app.workspace) == null ? void 0 : _b.getActiveFile) == null ? void 0 : _c.call(_b);
         filePath = activeFile ? activeFile.path : "unknown";
       }
-    } catch (error) {
+    } catch (e) {
     }
     let tableIndex = 0;
     const container = table.closest(".markdown-source-view, .markdown-preview-view, .markdown-reading-view, .cm-content, .markdown-preview-sizer");
@@ -595,11 +489,9 @@ var TableResizerPlugin = class extends import_obsidian.Plugin {
   applyStoredWidths(table) {
     const tableId = this.getTableIdentifier(table);
     const storedWidths = this.tableWidths.get(tableId);
-    this.log(`applyStoredWidths: table=${tableId}, hasWidths=${!!storedWidths}, count=${(storedWidths == null ? void 0 : storedWidths.size) || 0}`);
     if (storedWidths && storedWidths.size > 0) {
-      table.style.tableLayout = "fixed";
+      table.classList.add("table-resizer-fixed");
       storedWidths.forEach((width, columnIndex) => {
-        this.log(`  restoring col=${columnIndex} -> ${width}px`);
         this.applyColumnWidth(table, columnIndex, width);
       });
     }
@@ -612,7 +504,7 @@ var TableResizerPlugin = class extends import_obsidian.Plugin {
       this.deserializeWidths(data.tableWidths);
       delete data.tableWidths;
     }
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, data != null ? data : {});
   }
   async saveSettings() {
     await this.saveData({
@@ -621,96 +513,48 @@ var TableResizerPlugin = class extends import_obsidian.Plugin {
     });
   }
   onunload() {
-    this.log("Plugin unloading...");
     document.removeEventListener("mousemove", this.handleMouseMove);
     document.removeEventListener("mouseup", this.handleMouseUp);
     this.mutationObservers.forEach((observer) => {
       observer.disconnect();
     });
     this.mutationObservers.clear();
-    this.log("MutationObservers disconnected");
     this.mutationReapplyPending = false;
     if (this.keyupDebounceTimer !== null) {
-      clearTimeout(this.keyupDebounceTimer);
+      window.clearTimeout(this.keyupDebounceTimer);
       this.keyupDebounceTimer = null;
     }
     if (this.widthSaveTimer !== null) {
-      clearTimeout(this.widthSaveTimer);
+      window.clearTimeout(this.widthSaveTimer);
       this.widthSaveTimer = null;
     }
     const tables = document.querySelectorAll(".table-resizer-active");
     tables.forEach((table) => {
-      table.style.tableLayout = "";
       this.disableResizing(table);
     });
     if (this.tableWidths) {
       this.tableWidths.clear();
     }
-    this.log("Plugin unloaded");
-  }
-  dumpTableState(reason) {
-    this.log(`=== STATE DUMP: ${reason} ===`);
-    const allTables = document.querySelectorAll("table");
-    this.log(`  Total tables in DOM: ${allTables.length}`);
-    allTables.forEach((t, i) => {
-      const htmlTable = t;
-      const tableId = this.getTableIdentifier(htmlTable);
-      const rows = htmlTable.querySelectorAll("tr");
-      const colCount = rows.length > 0 ? rows[0].querySelectorAll("th, td").length : 0;
-      const hasClass = htmlTable.classList.contains("table-resizer-active");
-      const handleCount = htmlTable.querySelectorAll(".table-resizer-handle").length;
-      const stored = this.tableWidths.get(tableId);
-      const storedInfo = stored ? Array.from(stored.entries()).map(([c, w]) => `c${c}=${w}px`).join(",") : "none";
-      const domWidths = [];
-      if (rows.length > 0) {
-        rows[0].querySelectorAll("th, td").forEach((cell) => {
-          domWidths.push(`${cell.style.width || "auto"}`);
-        });
-      }
-      const tableLayout = htmlTable.style.tableLayout || "auto";
-      this.log(`  Table#${i}: id=${tableId}, ${rows.length}x${colCount}, active=${hasClass}, handles=${handleCount}, layout=${tableLayout}, domWidths=[${domWidths.join(",")}], stored=[${storedInfo}]`);
-    });
-    this.log(`  Stored tableWidths in memory: ${this.tableWidths.size} entries`);
-    this.tableWidths.forEach((cols, tid) => {
-      this.log(`    ${tid}: [${Array.from(cols.entries()).map(([c, w]) => `c${c}=${w}px`).join(", ")}]`);
-    });
-    try {
-      const view = this.app.workspace.getActiveViewOfType(import_obsidian.MarkdownView);
-      if (view && view.editor) {
-        const cursor = view.editor.getCursor();
-        this.log(`  Cursor: line=${cursor == null ? void 0 : cursor.line}, ch=${cursor == null ? void 0 : cursor.ch}`);
-      }
-    } catch (e) {
-    }
-    this.log(`=== STATE DUMP END ===`);
   }
   applyAllStoredWidths() {
     try {
       const tables = document.querySelectorAll(".table-resizer-active");
-      this.log(`applyAllStoredWidths: ${tables.length} active table(s)`);
       if (tables.length === 0) {
-        this.log("applyAllStoredWidths: no active tables, checking all tables...");
         const allTables = document.querySelectorAll("table");
-        this.log(`applyAllStoredWidths: found ${allTables.length} total table(s) in document`);
         allTables.forEach((table) => {
-          const htmlTable = table;
-          const tableId = this.getTableIdentifier(htmlTable);
+          const tableId = this.getTableIdentifier(table);
           if (this.tableWidths.has(tableId)) {
-            this.log(`applyAllStoredWidths: matched non-active table ${tableId}, applying`);
-            this.enableResizing(htmlTable);
-            this.applyStoredWidths(htmlTable);
+            this.enableResizing(table);
+            this.applyStoredWidths(table);
           }
         });
         return;
       }
-      tables.forEach((table, index) => {
-        const htmlTable = table;
-        this.log(`applyAllStoredWidths: processing table ${index}`);
-        this.applyStoredWidths(htmlTable);
+      tables.forEach((table) => {
+        this.applyStoredWidths(table);
       });
     } catch (error) {
-      if (DEBUG_LOGGING)
-        console.warn("Error applying stored widths:", error);
+      console.warn("Error applying stored widths:", error);
     }
   }
 };

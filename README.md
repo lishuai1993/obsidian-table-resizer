@@ -10,7 +10,7 @@ Resize Markdown table column widths by dragging in Obsidian — no HTML or plugi
 - **New tables, ready to drag** — a table you just typed can be resized right away, no manual refresh needed.
 - **Min/max protection** — widths are clamped to 50–800 px by default so a column never collapses or overruns.
 - **Per-table, per-file storage** — each table keeps its own widths, and multiple tables in one file work independently.
-- **A command to toggle** — "Toggle table resizer" enables or disables resizing on the fly.
+- **A command to toggle** — "Toggle resizing" enables or disables resizing on the fly.
 - **Long unbroken text wraps** — cells with long English/symbol strings that contain no spaces wrap within the column width instead of overflowing into the next cell.
 - **Non-destructive** — your Markdown source is never modified; disabling or uninstalling the plugin leaves your notes unchanged.
 
@@ -46,7 +46,7 @@ Widths live in the plugin's own data file, not inside your notes:
 3. Move the pointer to the **right edge of a column** until the resize handle appears.
 4. Drag left or right to change the width, then release.
 
-To stop resizing without uninstalling, run the command **Toggle table resizer** from the Command palette.
+To stop resizing without uninstalling, run the command **Toggle resizing** from the Command palette.
 
 ## Limitations
 
@@ -76,7 +76,7 @@ The first version was completed on 2026-06-13 and open sourced on GitHub, but wa
 - **新建表格立即可拖** — 刚输入的表格无需手动刷新即可调宽。
 - **最小 / 最大宽度保护** — 列宽默认限制在 50–800 像素，避免列被拖没或拖得过宽。
 - **按文件、按表格分别存储** — 每个表格独立保存，同一文件内的多个表格互不影响。
-- **命令开关** — 通过 “Toggle table resizer” 命令随时启用或停用调整功能。
+- **命令开关** — 通过 “Toggle resizing” 命令随时启用或停用调整功能。
 - **长英文 / 无空格字符串自动换行** — 单元格内以英文或符号结尾且不含空格的长字符串会随列宽自动换行，不再溢出到相邻格或被截断。
 - **非破坏性** — 绝不修改 Markdown 源码；停用或卸载插件都不会改动笔记内容。
 
@@ -112,7 +112,7 @@ The first version was completed on 2026-06-13 and open sourced on GitHub, but wa
 3. 将指针移到某列**右边缘**，出现调宽手柄后拖拽。
 4. 拖到合适的宽度后松开即可。
 
-如需停用而不卸载，可在命令面板运行 **Toggle table resizer**。
+如需停用而不卸载，可在命令面板运行 **Toggle resizing**。
 
 ## 已知限制
 
