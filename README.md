@@ -11,6 +11,7 @@ Resize Markdown table column widths by dragging in Obsidian — no HTML or plugi
 - **Min/max protection** — widths are clamped to 50–800 px by default so a column never collapses or overruns.
 - **Per-table, per-file storage** — each table keeps its own widths, and multiple tables in one file work independently.
 - **A command to toggle** — "Toggle table resizer" enables or disables resizing on the fly.
+- **Long unbroken text wraps** — cells with long English/symbol strings that contain no spaces wrap within the column width instead of overflowing into the next cell.
 - **Non-destructive** — your Markdown source is never modified; disabling or uninstalling the plugin leaves your notes unchanged.
 
 ## How widths are stored
@@ -55,7 +56,11 @@ To stop resizing without uninstalling, run the command **Toggle table resizer** 
 - **Complex or nested tables** may not resize reliably.
 - Tables with no rows are skipped.
 
+## License & Attribution
 
+This project is released under the [MIT License](LICENSE).
+
+The first version was completed on 2026-06-13 and open sourced on GitHub, but was not published to the Obsidian plugin marketplace at that time. In July, while preparing to publish, I discovered that the plugin name had already been taken, and that another plugin's drag-highlight styling was identical to this open-source library. This MIT declaration is therefore added in the hope that anyone referencing or reusing this library will provide appropriate attribution.
 
 ---
 
@@ -72,6 +77,7 @@ To stop resizing without uninstalling, run the command **Toggle table resizer** 
 - **最小 / 最大宽度保护** — 列宽默认限制在 50–800 像素，避免列被拖没或拖得过宽。
 - **按文件、按表格分别存储** — 每个表格独立保存，同一文件内的多个表格互不影响。
 - **命令开关** — 通过 “Toggle table resizer” 命令随时启用或停用调整功能。
+- **长英文 / 无空格字符串自动换行** — 单元格内以英文或符号结尾且不含空格的长字符串会随列宽自动换行，不再溢出到相邻格或被截断。
 - **非破坏性** — 绝不修改 Markdown 源码；停用或卸载插件都不会改动笔记内容。
 
 ## 宽度保存在哪里
@@ -115,4 +121,10 @@ To stop resizing without uninstalling, run the command **Toggle table resizer** 
 - **宽度随插件本地保存** — 不会随笔记迁移到其他设备或库。
 - **复杂的嵌套表格**可能无法可靠调整。
 - 无行数据的表格会被跳过。
+
+## 许可证与署名声明
+
+本项目采用 [MIT 许可证](LICENSE) 开源。
+
+第一版于 2026-06-13 完成开发，当时仅在 GitHub 开源代码，未发布到 Obsidian 插件市场。7 月准备发布时，发现插件名已被占用，且另一插件在拖拽过程中的高亮样式与本开源库完全一致。因此在此补充 MIT 声明，希望引用本开源库时能够注明来源。
 
